@@ -9,10 +9,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      hibernate.jdbc.time_zone: UTC
 
 app:
   jwt:
-    secret: ${APP_JWT_SECRET}
+    # ← valor por defecto para dev si no hay variable
+    secret: ${APP_JWT_SECRET:p2P!Q7vH9mR@t5Zk1LwX8sC#bF&gN3yV*eU4oI6qD%jM7rA$hK2nO5wE8uT0lY!zB}
     expiration: ${APP_JWT_EXP_MS:21600000}
