@@ -1,9 +1,8 @@
 package com.company.parking.web;
-
 import com.company.parking.adapters.in.security.JwtAuthFilter;
 import com.company.parking.application.service.EntryPortUseCase;
-import com.company.parking.domain.model.VehicleEntry;
-import com.company.parking.domain.model.VehicleHistory;
+import com.company.parking.web.dto.VehicleEntryDto;
+import com.company.parking.web.dto.VehicleHistoryDto;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,20 +24,27 @@ public class EntryController {
     public record EnterReq(@NotBlank String plate) {}
 
     @PostMapping("/{lotId}/enter")
-    public ResponseEntity<VehicleEntry> enter(@PathVariable UUID lotId, @RequestBody EnterReq req,
-                                              @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
-        return ResponseEntity.ok(useCase.enter(lotId, req.plate(), UUID.fromString(me.uid())));
+    public ResponseEntity<VehicleEntryDto> enter(@PathVariable UUID lotId,
+                                                 @RequestBody EnterReq req,
+                                                 @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
+        var e = useCase.enter(lotId, req.plate(), UUID.fromString(me.uid()));
+        return ResponseEntity.ok(VehicleEntryDto.from(e));
     }
 
     @PostMapping("/{lotId}/exit/{plate}")
-    public ResponseEntity<VehicleHistory> exit(@PathVariable UUID lotId, @PathVariable String plate,
-                                               @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
-        return ResponseEntity.ok(useCase.exit(lotId, plate, UUID.fromString(me.uid())));
+    public ResponseEntity<VehicleHistoryDto> exit(@PathVariable UUID lotId,
+                                                  @PathVariable String plate,
+                                                  @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
+        var h = useCase.exit(lotId, plate, UUID.fromString(me.uid()));
+        return ResponseEntity.ok(VehicleHistoryDto.from(h));
     }
 
     @GetMapping("/{lotId}/search")
-    public ResponseEntity<List<VehicleEntry>> search(@PathVariable UUID lotId, @RequestParam("q") String q,
-                                                     @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
-        return ResponseEntity.ok(useCase.searchParkedLike(lotId, q, UUID.fromString(me.uid())));
+    public ResponseEntity<List<VehicleEntryDto>> search(@PathVariable UUID lotId,
+                                                        @RequestParam("q") String q,
+                                                        @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
+        var list = useCase.searchParkedLike(lotId, q, UUID.fromString(me.uid()))
+                .stream().map(VehicleEntryDto::from).toList();
+        return ResponseEntity.ok(list);
     }
 }

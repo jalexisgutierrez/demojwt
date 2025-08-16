@@ -39,4 +39,7 @@ spring:
 app:
   jwt:
     secret: ${APP_JWT_SECRET:p2P!Q7vH9mR@t5Zk1LwX8sC#bF&gN3yV*eU4oI6qD%jM7rA$hK2nO5wE8uT0lY!zB}
-    # si usas un filtro JWT aquí, puedes necesitar issuer/audience opcionales
+
+mailer:
+  base-url: ${MAILER_BASE_URL:http://localhost:8083}
+

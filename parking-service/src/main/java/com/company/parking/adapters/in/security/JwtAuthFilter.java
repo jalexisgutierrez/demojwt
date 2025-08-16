@@ -1,7 +1,6 @@
 package com.company.parking.adapters.in.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.WeakKeyException;
 import jakarta.servlet.FilterChain;
@@ -20,7 +19,6 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -28,28 +26,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtParser parser;
 
     public JwtAuthFilter(@Value("${app.jwt.secret}") String secret) {
-        // Acepta secreto en Base64 o como texto plano UTF-8 (misma lógica en auth-service)
-        byte[] keyBytes;
-        if (secret != null && secret.matches("^[A-Za-z0-9+/=]+$")) {
-            try {
-                keyBytes = Decoders.BASE64.decode(secret);
-            } catch (Exception ignore) {
-                keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-            }
-        } else {
-            keyBytes = Optional.ofNullable(secret).orElse("").getBytes(StandardCharsets.UTF_8);
+        if (!StringUtils.hasText(secret)) {
+            throw new IllegalStateException("APP_JWT_SECRET no está definido");
         }
-
+        SecretKey key;
         try {
-            SecretKey key = Keys.hmacShaKeyFor(keyBytes); // lanza WeakKeyException si < 256 bits
-            this.parser = Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .setAllowedClockSkewSeconds(60) // tolerancia de reloj
-                    .build();
+            // **Siempre UTF-8 crudo**, igual que en auth-service
+            key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         } catch (WeakKeyException e) {
-            // Fallo temprano y explícito si la clave es débil
             throw new IllegalStateException("APP_JWT_SECRET es muy corto (HS256 requiere >= 32 bytes).", e);
         }
+        this.parser = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .setAllowedClockSkewSeconds(60)
+                .build();
     }
 
     @Override
@@ -57,19 +47,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     HttpServletResponse res,
                                     FilterChain chain) throws ServletException, IOException {
 
+
         String header = req.getHeader("Authorization");
+
         if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
             chain.doFilter(req, res);
             return;
         }
         String token = header.substring(7);
-
         try {
             Jws<Claims> jws = parser.parseClaimsJws(token);
             Claims c = jws.getBody();
 
-            String email = c.getSubject();          // "sub"
-            String role  = String.valueOf(c.get("role")); // "ADMIN" | "SOCIO"
+            String email = c.getSubject();
+            String role  = String.valueOf(c.get("role"));
             String uid   = String.valueOf(c.get("uid"));
 
             if (!StringUtils.hasText(email) || !StringUtils.hasText(role)) {
@@ -77,7 +68,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // Spring Security espera ROLE_
             var authority = new SimpleGrantedAuthority("ROLE_" + role);
             var principal = new UserPrincipal(uid, email);
             var authToken = new UsernamePasswordAuthenticationToken(principal, null, List.of(authority));
@@ -87,7 +77,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         } catch (ExpiredJwtException e) {
             unauthorized(res, req, "Token expirado");
-        } catch (JwtException e) { // firma inválida, mal formado, algoritmo distinto, etc.
+        } catch (JwtException e) {
             unauthorized(res, req, "Token inválido o ausente");
         }
     }

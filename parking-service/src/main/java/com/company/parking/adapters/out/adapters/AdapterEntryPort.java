@@ -56,4 +56,9 @@ public class AdapterEntryPort implements EntryPort {
     public BigDecimal sumHistoryBetween(UUID lotId, Instant from, Instant to) {
         return historyRepo.sumBetween(lotId, from, to);
     }
+
+    @Override
+    public Optional<VehicleEntry> findActiveByLotAndPlate(UUID lotId, String plate) {
+        return entryRepo.findByParkingLot_IdAndPlateIgnoreCase(lotId, plate);
+    }
 }

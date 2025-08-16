@@ -24,6 +24,8 @@ public interface EntryPort {
 
     List<VehicleEntry> searchActiveByLotAndPlateLike(ParkingLot lot, String like);
 
-    // Apoyos para indicadores/fees:
     BigDecimal sumHistoryBetween(UUID lotId, Instant from, Instant to);
+
+    Optional<VehicleEntry> findActiveByLotAndPlate(UUID lotId, String plate);
+
 }

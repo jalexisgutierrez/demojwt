@@ -3,6 +3,7 @@ package com.company.parking.web;
 import com.company.parking.adapters.in.security.JwtAuthFilter;
 import com.company.parking.application.service.ParkingLotPortUseCase;
 import com.company.parking.domain.model.ParkingLot;
+import com.company.parking.web.dto.ParkingLotDto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
@@ -22,16 +23,17 @@ public class ParkingLotController {
     public record CreateLotReq(@NotBlank String name, @Min(1) int capacity, BigDecimal hourlyRate) {}
 
     @PostMapping
-    public ResponseEntity<ParkingLot> create(@RequestBody CreateLotReq req,
-                                             @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
+    public ResponseEntity<ParkingLotDto> create(@RequestBody CreateLotReq req,
+                                                @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
         var lot = useCase.create(req.name(), req.capacity(), req.hourlyRate(),
                 UUID.fromString(me.uid()), me.email());
-        return ResponseEntity.ok(lot);
+        return ResponseEntity.ok(ParkingLotDto.from(lot));
     }
 
     @GetMapping("/{lotId}")
-    public ResponseEntity<ParkingLot> get(@PathVariable UUID lotId, @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
-        return ResponseEntity.ok(useCase.getOwned(lotId, UUID.fromString(me.uid())));
+    public ResponseEntity<ParkingLotDto> get(@PathVariable UUID lotId,
+                                             @AuthenticationPrincipal JwtAuthFilter.UserPrincipal me) {
+        var lot = useCase.getOwned(lotId, UUID.fromString(me.uid()));
+        return ResponseEntity.ok(ParkingLotDto.from(lot));
     }
-
 }

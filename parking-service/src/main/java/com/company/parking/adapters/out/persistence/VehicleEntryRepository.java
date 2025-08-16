@@ -4,6 +4,7 @@ import com.company.parking.domain.model.ParkingLot;
 import com.company.parking.domain.model.VehicleEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -56,5 +57,7 @@ public interface VehicleEntryRepository extends JpaRepository<VehicleEntry, UUID
       )
   """, nativeQuery = true)
     List<String> firstTimers(UUID lotId);
+
+    Optional<VehicleEntry> findByParkingLot_IdAndPlateIgnoreCase(UUID lotId, String plate);
 
 }

@@ -1,4 +1,4 @@
-package com.company.parking.web;
+package com.company.parking.Exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
