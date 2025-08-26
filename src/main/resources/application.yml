@@ -1,7 +1,0 @@
-server:
-  port: 8080
-
-app:
-  jwt:
-    secret: "p2P!Q7vH9mR@t5Zk1LwX8sC#bF&gN3yV*eU4oI6qD%jM7rA$hK2nO5wE8uT0lY!zB"
-    expiration: 600000
